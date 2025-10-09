@@ -181,12 +181,12 @@ export default function SearchUser() {
         //   return;
         // }
 
-        // Authorization 헤더 포함 요청
+        // 공개 API이므로 Authorization 헤더 제거 (소셜 로그인 JWT 문제 해결)
         const res = await fetch(backendUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            // Authorization 헤더 제거 - 공개 API이므로 인증 불필요
             'X-Requested-With': 'XMLHttpRequest',
             Accept: 'application/json',
           },
