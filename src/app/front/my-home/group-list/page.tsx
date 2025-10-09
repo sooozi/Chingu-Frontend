@@ -433,7 +433,7 @@ export default function GroupList() {
                   </button>
                   <button
                     onClick={() => handleInviteAccept(invite.requestId)}
-                    className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    className="text-xs px-2 py-1 bg-main-color text-white rounded"
                   >
                     승인
                   </button>

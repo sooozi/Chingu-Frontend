@@ -296,12 +296,12 @@ export default function MemberDetail() {
                     disabled={
                       isInviting || invitedFriends.has(friend.friendUserId)
                     }
-                    className="!px-2 !py-1 bg-point1-color disabled:opacity-50 disabled:cursor-not-allowed !rounded-full transition-colors duration-200"
+                    className="!text-xs !px-2 !py-1 bg-point1-color disabled:opacity-50 disabled:cursor-not-allowed !rounded-full transition-colors duration-200"
                   >
                     {invitedFriends.has(friend.friendUserId) ? (
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>초대 중...</span>
+                        <span className="!text-xs">초대 중...</span>
                       </div>
                     ) : isInviting ? (
                       <div className="flex items-center gap-1">
