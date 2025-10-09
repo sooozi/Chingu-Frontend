@@ -42,11 +42,10 @@ export default function SearchUser() {
       setIsSearching(true);
       setErrorMsg('');
 
-      // 공개 API이므로 토큰 검증 불필요
+      // 토큰 체크 제거
       // if (!token) {
       //   setErrorMsg('로그인이 필요합니다.');
       //   setIsSearching(false);
-      //   router.replace('/front/account/login');
       //   return;
       // }
 
@@ -163,8 +162,7 @@ export default function SearchUser() {
           });
         }
 
-        // 공개 API이므로 토큰 검증 불필요
-        // 토큰 만료 확인 및 처리
+        // 토큰 만료 확인 제거
         // if (payload && payload.exp && Date.now() > payload.exp * 1000) {
         //   console.log(
         //     '⚠️ [토큰 만료] 토큰이 만료되었습니다. 로그인이 필요합니다.'
@@ -175,7 +173,7 @@ export default function SearchUser() {
         //   return;
         // }
 
-        // 토큰 유효성 추가 검증
+        // 토큰 유효성 검증 제거
         // if (!cleanToken || cleanToken.length < 10) {
         //   console.log('⚠️ [토큰 무효] 토큰이 유효하지 않습니다.');
         //   alert('인증 토큰이 유효하지 않습니다. 다시 로그인해주세요.');
@@ -183,13 +181,12 @@ export default function SearchUser() {
         //   return;
         // }
 
-        // 공개 API이므로 Authorization 헤더 제거 (소셜 로그인 토큰 문제 해결)
-        console.log('🔓 [검색 요청] Authorization 헤더 제거됨 - 공개 API');
+        // Authorization 헤더 포함 요청
         const res = await fetch(backendUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Authorization 헤더 제거 - 공개 API이므로 인증 불필요
+            Authorization: `Bearer ${token}`,
             'X-Requested-With': 'XMLHttpRequest',
             Accept: 'application/json',
           },
@@ -216,25 +213,25 @@ export default function SearchUser() {
           );
           console.log('[검색 결과] 정렬된 사용자 목록:', sorted);
 
-          // 로그인 시 친구 목록업데이트 (공개 API로 가정하여 Authorization 제거)
+          // 로그인 시 친구 목록업데이트
           try {
-            // 공개 API이므로 토큰 체크 불필요
-            const friendsUrl = `/api/friends`;
-            const friendsResponse = await fetch(friendsUrl, {
-              headers: {
-                'Content-Type': 'application/json',
-                // Authorization 헤더 제거 - 공개 API로 가정
-              },
-            });
+            if (token) {
+              const friendsUrl = `/api/friends`;
+              const friendsResponse = await fetch(friendsUrl, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
 
-            if (friendsResponse.ok) {
-              const friendsData: Array<{ friendUserId: number }> =
-                await friendsResponse.json();
-              const updatedUsers = sorted.map((user) => ({
-                ...user,
-                isFriend: friendsData.some((f) => f.friendUserId === user.id),
-              }));
-              setUsers(updatedUsers);
+              if (friendsResponse.ok) {
+                const friendsData: Array<{ friendUserId: number }> =
+                  await friendsResponse.json();
+                const updatedUsers = sorted.map((user) => ({
+                  ...user,
+                  isFriend: friendsData.some((f) => f.friendUserId === user.id),
+                }));
+                setUsers(updatedUsers);
+              } else {
+                setUsers(sorted);
+              }
             } else {
               setUsers(sorted);
             }
@@ -247,17 +244,17 @@ export default function SearchUser() {
             setErrorMsg('찾으시는 친구가 없어요');
           }
         } else {
-          // 401 오류 시 특별 처리
-          if (res.status === 401) {
-            console.log('🔒 [인증 오류] 401 Unauthorized - 토큰 재검증 필요');
-            setErrorMsg('인증이 필요합니다. 다시 로그인해주세요.');
-            // 토큰 삭제 후 로그인 페이지로 이동
-            document.cookie =
-              'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie =
-              'loginType=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            return;
-          }
+          // 401 오류 시 특별 처리 제거
+          // if (res.status === 401) {
+          //   console.log('🔒 [인증 오류] 401 Unauthorized - 토큰 재검증 필요');
+          //   setErrorMsg('인증이 필요합니다. 다시 로그인해주세요.');
+          //   // 토큰 삭제 후 로그인 페이지로 이동
+          //   document.cookie =
+          //     'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          //   document.cookie =
+          //     'loginType=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          //   return;
+          // }
           setErrorMsg(data?.message || '검색에 실패했습니다.');
         }
       } catch (err) {
@@ -274,11 +271,12 @@ export default function SearchUser() {
   const handleFriendRequest = async (friendId: number) => {
     const token = getToken();
 
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      router.replace('/front/account/login');
-      return;
-    }
+    // 토큰 체크 제거
+    // if (!token) {
+    //   alert('로그인이 필요합니다.');
+    //   router.replace('/front/account/login');
+    //   return;
+    // }
 
     // 요청 중복 방지
     if (requestingFriends.has(friendId)) return;

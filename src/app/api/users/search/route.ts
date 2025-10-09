@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     tokenLength: token?.length,
     keyword: keyword,
     url: req.url,
+    API_BASE: API_BASE,
   });
 
   if (!API_BASE) {
@@ -22,14 +23,13 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 공개 API이므로 토큰 검증 불필요
-  // if (!token || !token.startsWith('Bearer')) {
-  //   console.log('[검색 API] 토큰 없음:', { token: token });
-  //   return NextResponse.json(
-  //     { message: '인증 토큰이 없습니다.' },
-  //     { status: 401 }
-  //   );
-  // }
+  if (!token || !token.startsWith('Bearer')) {
+    console.log('[검색 API] 토큰 없음:', { token: token });
+    return NextResponse.json(
+      { message: '인증 토큰이 없습니다.' },
+      { status: 401 }
+    );
+  }
 
   try {
     const url = keyword
@@ -41,12 +41,13 @@ export async function GET(req: NextRequest) {
       hasToken: Boolean(token),
       tokenStart: token?.substring(0, 20) + '...',
       authorizationHeader: token,
+      keyword: keyword,
     });
 
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        // Authorization 헤더 제거 - 공개 API이므로 인증 불필요
+        Authorization: token,
         'Content-Type': 'application/json',
       },
     });
@@ -61,7 +62,10 @@ export async function GET(req: NextRequest) {
       const errorText = await res.text();
       console.log('[검색 API] 백엔드 오류 상세:', {
         status: res.status,
+        statusText: res.statusText,
         errorText: errorText,
+        url: url,
+        headers: Object.fromEntries(res.headers.entries()),
       });
     }
 
