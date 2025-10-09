@@ -54,9 +54,6 @@ export default function MypageChangePw() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          nickname: 'default-nickname', // ⚠️ 비번만 수정하는 경우라도 기본값 필요
-          profilePictureUrl: '',
-          bio: '',
           currentPassword: data.currentPassword,
           newPassword: data.newPassword,
           confirmNewPassword: data.confirmPassword,
@@ -79,7 +76,10 @@ export default function MypageChangePw() {
       }
 
       setMessage('비밀번호가 성공적으로 변경되었습니다.');
-      setTimeout(() => router.push('/front/my-page'), 2000);
+      setTimeout(() => {
+        // 마이페이지로 이동하면서 새로고침 파라미터 추가
+        router.push('/front/my-page?refresh=true');
+      }, 2000);
     } catch (error) {
       console.error('[비밀번호 변경 요청 오류]', error);
       setErrorMsg('서버 오류가 발생했습니다.');

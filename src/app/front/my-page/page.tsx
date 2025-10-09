@@ -10,7 +10,7 @@ import CheckableInput from '@/components/common/CheckableInput';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import SocialLoginBadge from '@/components/common/SocialLoginBadge';
-import { getCookieValue } from '@/utils/cookie';
+import { getCookieValue, deleteCookie } from '@/utils/cookie';
 
 const MypageSchema = z.object({
   nickname: z.string().min(2, '닉네임은 2자 이상 입력해주세요.'),
@@ -76,6 +76,7 @@ export default function Mypage() {
     if (!token) return;
 
     const payload = decodeJwtPayload(token);
+    console.log('[마이페이지] JWT payload:', payload);
 
     if (payload?.nickname) {
       setJwtNickname(payload.nickname);
@@ -87,10 +88,37 @@ export default function Mypage() {
       setValue('nickname', payload.sub);
     }
 
-    // socialType 필드 확인 및 설정
+    // 1. URL 파라미터에서 소셜 타입 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSocialType = urlParams.get('socialType');
+    console.log('[마이페이지] URL 파라미터 확인:', urlSocialType);
+    if (urlSocialType) {
+      console.log('[마이페이지] URL에서 소셜 타입 발견:', urlSocialType);
+      setSocialType(urlSocialType);
+      // URL 파라미터 제거
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      return;
+    }
+
+    // 2. 쿠키에서 소셜 타입 확인
+    console.log('[마이페이지] 모든 쿠키:', document.cookie);
+    const storedLoginType = getCookieValue('loginType');
+    console.log('[마이페이지] loginType 쿠키 값:', storedLoginType);
+    if (storedLoginType) {
+      console.log('[마이페이지] 쿠키에서 소셜 타입 발견:', storedLoginType);
+      setSocialType(storedLoginType);
+      // 쿠키에서 제거 (한 번만 사용)
+      deleteCookie('loginType');
+      return;
+    }
+
+    // 3. JWT에서 소셜 타입 확인 (기존 로직)
     if (payload?.socialType) {
+      console.log('[마이페이지] JWT에서 socialType 발견:', payload.socialType);
       setSocialType(payload.socialType);
     } else {
+      console.log('[마이페이지] JWT에서 socialType 없음, 다른 필드 확인 중...');
       // 다른 가능한 필드명들 확인
       const possibleSocialFields = [
         'social_type',
@@ -104,9 +132,12 @@ export default function Mypage() {
         'given_name',
         'family_name',
       ];
+
+      let socialTypeFound = false;
       for (const field of possibleSocialFields) {
         if (payload?.[field] && typeof payload[field] === 'string') {
           const value = payload[field] as string;
+          console.log(`[마이페이지] 필드 ${field} 값:`, value);
 
           // 카카오 관련 키워드 확인
           if (
@@ -114,23 +145,43 @@ export default function Mypage() {
             value.toLowerCase().includes('kakao.com') ||
             value.toLowerCase().includes('kakaoaccount')
           ) {
+            console.log('[마이페이지] 카카오 로그인 감지됨');
             setSocialType('kakao');
+            socialTypeFound = true;
             break;
           }
           // 구글 관련 키워드 확인
           if (value.toLowerCase().includes('google')) {
+            console.log('[마이페이지] 구글 로그인 감지됨');
             setSocialType('google');
+            socialTypeFound = true;
             break;
           }
         }
       }
+
+      if (!socialTypeFound) {
+        console.log('[마이페이지] JWT에서 소셜 로그인 정보를 찾을 수 없음');
+      }
     }
-  }, [setValue, socialType]);
+  }, [setValue]);
 
   useEffect(() => {
     const token = getCookieValue('accessToken');
 
     if (!token) return;
+
+    // refresh 파라미터 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldRefresh = urlParams.get('refresh');
+    if (shouldRefresh) {
+      console.log(
+        '[마이페이지] 새로고침 파라미터 감지, 사용자 정보 강제 새로고침'
+      );
+      // URL에서 refresh 파라미터 제거
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
 
     const checkUploadLimit = () => {
       // SSR 환경에서 localStorage 접근 안전성 확인
@@ -184,6 +235,12 @@ export default function Mypage() {
       tokenNickname = '';
     }
 
+    console.log('[마이페이지] JWT에서 추출한 닉네임:', {
+      payloadNickname: payload?.nickname,
+      payloadSub: payload?.sub,
+      tokenNickname: tokenNickname,
+    });
+
     fetch('/api/users/mypage', {
       method: 'GET',
       headers: {
@@ -196,15 +253,50 @@ export default function Mypage() {
           router.push('/front/account/login');
           return;
         }
-        if (!res.ok) throw new Error('유저 정보 조회 실패');
+        if (!res.ok) {
+          console.error('[유저 정보 불러오기 오류] 응답 상태:', res.status);
+          throw new Error('유저 정보 조회 실패');
+        }
         return res.json();
       })
       .then((data) => {
         if (!data) return;
 
-        // API 응답의 닉네임이 없거나 비어있으면 JWT 토큰의 닉네임 사용
-        const finalNickname =
-          data.nickname || tokenNickname || jwtNickname || '';
+        console.log('[마이페이지] API 응답 데이터:', data);
+
+        // API 응답에서 socialType 확인
+        if (data.socialType) {
+          console.log('[마이페이지] API에서 socialType 발견:', data.socialType);
+          setSocialType(data.socialType);
+        } else if (data.provider) {
+          console.log('[마이페이지] API에서 provider 발견:', data.provider);
+          setSocialType(data.provider);
+        } else if (data.social_type) {
+          console.log(
+            '[마이페이지] API에서 social_type 발견:',
+            data.social_type
+          );
+          setSocialType(data.social_type);
+        }
+
+        // API 응답의 닉네임을 우선 사용, default-nickname이면 JWT sub 사용
+        let finalNickname = data.nickname || tokenNickname || jwtNickname || '';
+
+        // default-nickname이면 JWT의 sub 필드 사용
+        if (finalNickname === 'default-nickname' && payload?.sub) {
+          finalNickname = payload.sub;
+          console.log(
+            '[마이페이지] default-nickname 감지, JWT sub 사용:',
+            payload.sub
+          );
+        }
+
+        console.log('[마이페이지] 닉네임 우선순위:', {
+          apiNickname: data.nickname,
+          tokenNickname: tokenNickname,
+          jwtNickname: jwtNickname,
+          finalNickname: finalNickname,
+        });
 
         reset({
           nickname: finalNickname,
@@ -215,7 +307,41 @@ export default function Mypage() {
 
         if (data.profilePictureUrl) setImagePreview(data.profilePictureUrl);
       })
-      .catch((err) => console.error('[유저 정보 불러오기 오류]', err));
+      .catch((err) => {
+        console.error('[유저 정보 불러오기 오류]', err);
+        // API 호출 실패 시 JWT에서 닉네임 사용
+        console.log('[마이페이지] API 실패, JWT에서 닉네임 사용');
+        let finalNickname = tokenNickname || jwtNickname || '';
+
+        // default-nickname이면 JWT의 sub 필드 사용
+        if (finalNickname === 'default-nickname' && payload?.sub) {
+          finalNickname = payload.sub;
+          console.log(
+            '[마이페이지] API 실패 후 default-nickname 감지, JWT sub 사용:',
+            payload.sub
+          );
+        }
+
+        if (finalNickname) {
+          reset({
+            nickname: finalNickname,
+            name: '',
+            userId: '',
+            email: '',
+          });
+        }
+
+        // 쿠키에서 소셜 타입 재확인
+        const storedLoginType = getCookieValue('loginType');
+        if (storedLoginType) {
+          console.log(
+            '[마이페이지] API 실패 후 쿠키에서 소셜 타입 발견:',
+            storedLoginType
+          );
+          setSocialType(storedLoginType);
+          deleteCookie('loginType');
+        }
+      });
 
     return () => {
       clearTimeout(timeoutId);
@@ -472,12 +598,10 @@ export default function Mypage() {
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold mb-2">내 정보</h3>
             <SocialLoginBadge socialType={socialType} />
-            {/* 디버깅용: socialType 상태 확인 */}
-            {!socialType && (
-              <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                socialType: {socialType || 'undefined'}
-              </div>
-            )}
+            {/* socialType 상태 확인 */}
+            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              socialType: {socialType || 'undefined'}
+            </div>
           </div>
           <Button
             type="button"

@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
     // 토큰을 쿠키로 설정하고 메인 페이지로 리다이렉트
     const redirectResponse = NextResponse.redirect(
-      new URL('/front/my-home', req.url)
+      new URL('/front/my-home?socialType=oauth', req.url)
     );
 
     if (data.accessToken) {
@@ -56,6 +56,14 @@ export async function GET(req: NextRequest) {
         secure: true,
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 7, // 7일
+      });
+
+      // OAuth 로그인 시 소셜 타입 쿠키도 설정
+      redirectResponse.cookies.set('loginType', 'oauth', {
+        path: '/',
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 300, // 5분
       });
     }
 

@@ -154,17 +154,25 @@ export default function Login() {
 
   // 카카오 로그인 처리
   const handleKakaoLogin = () => {
+    // 소셜 로그인 타입을 쿠키에 저장
+    document.cookie = 'loginType=kakao; path=/; max-age=300; SameSite=Lax';
+    console.log('[카카오 로그인] 쿠키 설정 완료: loginType=kakao');
+
     const apiBaseUrl =
       process.env.NEXT_PUBLIC_API_URL || 'https://chinguchingu.kro.kr';
     // URL 끝에 슬래시가 있는지 확인하고 제거
     const cleanApiBaseUrl = apiBaseUrl.replace(/\/$/, '');
     const kakaoLoginUrl = `${cleanApiBaseUrl}/oauth2/authorization/kakao`;
 
+    console.log('[카카오 로그인] 리다이렉트 URL:', kakaoLoginUrl);
     window.location.href = kakaoLoginUrl;
   };
 
   // 구글 로그인 처리
   const handleGoogleLogin = () => {
+    // 소셜 로그인 타입을 쿠키에 저장
+    document.cookie = 'loginType=google; path=/; max-age=300; SameSite=Lax';
+
     const apiBaseUrl =
       process.env.NEXT_PUBLIC_API_URL || 'https://chinguchingu.kro.kr';
     // URL 끝에 슬래시가 있는지 확인하고 제거

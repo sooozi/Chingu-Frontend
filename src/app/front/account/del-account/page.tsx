@@ -4,7 +4,7 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { getCookieValue } from '@/utils/cookie';
+import { getCookieValue, deleteCookie } from '@/utils/cookie';
 
 export default function MypageDeleteAccount() {
   const router = useRouter();
@@ -21,19 +21,50 @@ export default function MypageDeleteAccount() {
       if (!token) return;
 
       try {
-        // 1. JWT 토큰에서 먼저 확인
+        // 1. URL 파라미터에서 소셜 타입 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSocialType = urlParams.get('socialType');
+        if (urlSocialType) {
+          console.log('[회원 탈퇴] URL에서 소셜 타입 발견:', urlSocialType);
+          setIsSocialLogin(true);
+          return;
+        }
+
+        // 2. 쿠키에서 소셜 타입 확인
+        const storedLoginType = getCookieValue('loginType');
+        if (storedLoginType) {
+          console.log('[회원 탈퇴] 쿠키에서 소셜 타입 발견:', storedLoginType);
+          setIsSocialLogin(true);
+          // 쿠키에서 제거 (한 번만 사용)
+          deleteCookie('loginType');
+          return;
+        }
+
+        // 3. JWT 토큰에서 확인
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log('[회원 탈퇴] JWT payload:', payload);
 
-        const isSocialFromJWT =
-          payload.socialType ||
-          payload.provider ||
-          payload.auth_provider ||
-          payload.login_type;
+        // JWT에서 소셜 로그인 정보 확인
+        let isSocialFromJWT = false;
+        let socialType = '';
+
+        if (payload.socialType) {
+          isSocialFromJWT = true;
+          socialType = payload.socialType;
+        } else if (payload.provider) {
+          isSocialFromJWT = true;
+          socialType = payload.provider;
+        } else if (payload.auth_provider) {
+          isSocialFromJWT = true;
+          socialType = payload.auth_provider;
+        } else if (payload.login_type) {
+          isSocialFromJWT = true;
+          socialType = payload.login_type;
+        }
 
         if (isSocialFromJWT) {
           setIsSocialLogin(true);
-          console.log('[회원 탈퇴] JWT에서 소셜 로그인 감지:', isSocialFromJWT);
+          console.log('[회원 탈퇴] JWT에서 소셜 로그인 감지:', socialType);
           return;
         }
 
