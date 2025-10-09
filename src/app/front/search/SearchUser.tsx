@@ -42,13 +42,13 @@ export default function SearchUser() {
       setIsSearching(true);
       setErrorMsg('');
 
-      // 토큰이 없으면 로그인 페이지로 이동
-      if (!token) {
-        setErrorMsg('로그인이 필요합니다.');
-        setIsSearching(false);
-        router.replace('/front/account/login');
-        return;
-      }
+      // 공개 API이므로 토큰 검증 불필요
+      // if (!token) {
+      //   setErrorMsg('로그인이 필요합니다.');
+      //   setIsSearching(false);
+      //   router.replace('/front/account/login');
+      //   return;
+      // }
 
       try {
         // 프록시를 통해 요청 (백엔드 JWT 인증 설정 문제 해결 전까지)
@@ -163,24 +163,25 @@ export default function SearchUser() {
           });
         }
 
+        // 공개 API이므로 토큰 검증 불필요
         // 토큰 만료 확인 및 처리
-        if (payload && payload.exp && Date.now() > payload.exp * 1000) {
-          console.log(
-            '⚠️ [토큰 만료] 토큰이 만료되었습니다. 로그인이 필요합니다.'
-          );
-          alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-          // 로그인 페이지로 리다이렉트
-          window.location.href = '/front/account/login';
-          return;
-        }
+        // if (payload && payload.exp && Date.now() > payload.exp * 1000) {
+        //   console.log(
+        //     '⚠️ [토큰 만료] 토큰이 만료되었습니다. 로그인이 필요합니다.'
+        //   );
+        //   alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+        //   // 로그인 페이지로 리다이렉트
+        //   window.location.href = '/front/account/login';
+        //   return;
+        // }
 
         // 토큰 유효성 추가 검증
-        if (!cleanToken || cleanToken.length < 10) {
-          console.log('⚠️ [토큰 무효] 토큰이 유효하지 않습니다.');
-          alert('인증 토큰이 유효하지 않습니다. 다시 로그인해주세요.');
-          window.location.href = '/front/account/login';
-          return;
-        }
+        // if (!cleanToken || cleanToken.length < 10) {
+        //   console.log('⚠️ [토큰 무효] 토큰이 유효하지 않습니다.');
+        //   alert('인증 토큰이 유효하지 않습니다. 다시 로그인해주세요.');
+        //   window.location.href = '/front/account/login';
+        //   return;
+        // }
 
         // 공개 API이므로 Authorization 헤더 제거 (소셜 로그인 토큰 문제 해결)
         console.log('🔓 [검색 요청] Authorization 헤더 제거됨 - 공개 API');
@@ -217,26 +218,23 @@ export default function SearchUser() {
 
           // 로그인 시 친구 목록업데이트 (공개 API로 가정하여 Authorization 제거)
           try {
-            if (token) {
-              const friendsUrl = `/api/friends`;
-              const friendsResponse = await fetch(friendsUrl, {
-                headers: {
-                  'Content-Type': 'application/json',
-                  // Authorization 헤더 제거 - 공개 API로 가정
-                },
-              });
+            // 공개 API이므로 토큰 체크 불필요
+            const friendsUrl = `/api/friends`;
+            const friendsResponse = await fetch(friendsUrl, {
+              headers: {
+                'Content-Type': 'application/json',
+                // Authorization 헤더 제거 - 공개 API로 가정
+              },
+            });
 
-              if (friendsResponse.ok) {
-                const friendsData: Array<{ friendUserId: number }> =
-                  await friendsResponse.json();
-                const updatedUsers = sorted.map((user) => ({
-                  ...user,
-                  isFriend: friendsData.some((f) => f.friendUserId === user.id),
-                }));
-                setUsers(updatedUsers);
-              } else {
-                setUsers(sorted);
-              }
+            if (friendsResponse.ok) {
+              const friendsData: Array<{ friendUserId: number }> =
+                await friendsResponse.json();
+              const updatedUsers = sorted.map((user) => ({
+                ...user,
+                isFriend: friendsData.some((f) => f.friendUserId === user.id),
+              }));
+              setUsers(updatedUsers);
             } else {
               setUsers(sorted);
             }
@@ -258,9 +256,6 @@ export default function SearchUser() {
               'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             document.cookie =
               'loginType=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            setTimeout(() => {
-              window.location.href = '/front/account/login';
-            }, 1500);
             return;
           }
           setErrorMsg(data?.message || '검색에 실패했습니다.');

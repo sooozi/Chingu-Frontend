@@ -22,13 +22,14 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  if (!token || !token.startsWith('Bearer')) {
-    console.log('[검색 API] 토큰 없음:', { token: token });
-    return NextResponse.json(
-      { message: '인증 토큰이 없습니다.' },
-      { status: 401 }
-    );
-  }
+  // 공개 API이므로 토큰 검증 불필요
+  // if (!token || !token.startsWith('Bearer')) {
+  //   console.log('[검색 API] 토큰 없음:', { token: token });
+  //   return NextResponse.json(
+  //     { message: '인증 토큰이 없습니다.' },
+  //     { status: 401 }
+  //   );
+  // }
 
   try {
     const url = keyword
@@ -45,7 +46,7 @@ export async function GET(req: NextRequest) {
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        Authorization: token,
+        // Authorization 헤더 제거 - 공개 API이므로 인증 불필요
         'Content-Type': 'application/json',
       },
     });
