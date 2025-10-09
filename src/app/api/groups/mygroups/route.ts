@@ -19,10 +19,22 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    console.log('[그룹 API] 백엔드 요청:', {
+      url: `${API_BASE}/api/groups/mygroups`,
+      hasToken: Boolean(token),
+      tokenStart: token?.substring(0, 20) + '...',
+    });
+
     const res = await fetch(`${API_BASE}/api/groups/mygroups`, {
       headers: {
         Authorization: token,
       },
+    });
+
+    console.log('[그룹 API] 백엔드 응답:', {
+      status: res.status,
+      statusText: res.statusText,
+      ok: res.ok,
     });
 
     const contentType = res.headers.get('content-type') || '';

@@ -18,9 +18,32 @@ export async function POST(req: NextRequest) {
     const contentType = backendRes.headers.get('content-type');
     const rawText = await backendRes.text();
 
-    console.log('[백엔드 응답 상태]', backendRes.status);
-    console.log('[백엔드 응답 본문]', rawText);
-    console.log('[백엔드 응답 타입]', contentType);
+    console.log('[일반 로그인] 백엔드 응답 상태:', backendRes.status);
+    console.log('[일반 로그인] 백엔드 응답 본문:', rawText);
+    console.log('[일반 로그인] 백엔드 응답 타입:', contentType);
+
+    // 일반 로그인 토큰 분석
+    if (backendRes.ok && rawText) {
+      try {
+        const responseData = JSON.parse(rawText);
+        if (responseData.accessToken) {
+          const tokenParts = responseData.accessToken.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            console.log('[일반 로그인] 토큰 페이로드:', {
+              sub: payload.sub,
+              id: payload.id,
+              nickname: payload.nickname,
+              iat: payload.iat,
+              exp: payload.exp,
+              expDate: new Date(payload.exp * 1000).toISOString(),
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[일반 로그인] 토큰 파싱 오류:', e);
+      }
+    }
 
     if (!backendRes.ok) {
       return new NextResponse(rawText, {

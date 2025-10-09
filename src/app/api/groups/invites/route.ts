@@ -101,13 +101,32 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'API_BASE_URL 누락됨' }, { status: 500 });
   }
 
+  if (!token || !token.startsWith('Bearer')) {
+    return NextResponse.json(
+      { message: '인증 토큰이 필요합니다.' },
+      { status: 401 }
+    );
+  }
+
   try {
+    console.log('[초대 API] 백엔드 요청:', {
+      url: `${API_BASE}/api/groups/invites`,
+      hasToken: Boolean(token),
+      tokenStart: token?.substring(0, 20) + '...',
+    });
+
     const res = await fetch(`${API_BASE}/api/groups/invites`, {
       method: 'GET',
       headers: {
-        Authorization: token || '',
+        Authorization: token,
         'Content-Type': 'application/json',
       },
+    });
+
+    console.log('[초대 API] 백엔드 응답:', {
+      status: res.status,
+      statusText: res.statusText,
+      ok: res.ok,
     });
 
     if (!res.ok) {

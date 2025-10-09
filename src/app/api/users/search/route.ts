@@ -31,6 +31,27 @@ export async function GET(req: NextRequest) {
       tokenStart: token?.substring(0, 20) + '...',
     });
 
+    // 토큰 상세 분석
+    if (token) {
+      try {
+        const tokenParts = token.replace('Bearer ', '').split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(atob(tokenParts[1]));
+          console.log('[검색 API] 토큰 페이로드:', {
+            sub: payload.sub,
+            id: payload.id,
+            nickname: payload.nickname,
+            iat: payload.iat,
+            exp: payload.exp,
+            expDate: new Date(payload.exp * 1000).toISOString(),
+            isExpired: Date.now() > payload.exp * 1000,
+          });
+        }
+      } catch (e) {
+        console.error('[검색 API] 토큰 파싱 오류:', e);
+      }
+    }
+
     const res = await fetch(url, {
       method: 'GET',
       headers: {
