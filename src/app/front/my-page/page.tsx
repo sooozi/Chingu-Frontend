@@ -375,9 +375,22 @@ export default function Mypage() {
       alert('로그인이 필요합니다.');
       router.push('/front/account/login');
       return;
-    } else {
-      router.push('/front/my-page/change-pw');
     }
+
+    // 소셜 로그인 사용자인지 확인
+    if (
+      socialType &&
+      socialType !== 'undefined' &&
+      socialType !== 'NONE' &&
+      socialType !== ''
+    ) {
+      alert(
+        '소셜 로그인 사용자는 비밀번호를 설정할 수 없습니다.\n소셜 로그인 계정의 비밀번호는 해당 소셜 플랫폼에서 관리됩니다.'
+      );
+      return;
+    }
+
+    router.push('/front/my-page/change-pw');
   };
 
   const handleWithdraw = () => {

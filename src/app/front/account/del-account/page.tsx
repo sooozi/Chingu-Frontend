@@ -4,7 +4,7 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { getCookieValue } from '@/utils/cookie';
+import { getCookieValue, deleteCookie } from '@/utils/cookie';
 
 export default function MypageDeleteAccount() {
   const router = useRouter();
@@ -214,7 +214,12 @@ export default function MypageDeleteAccount() {
       }
 
       setMessage('회원 탈퇴가 완료되었습니다.');
-      setTimeout(() => router.push('/'), 2000);
+
+      // 회원 탈퇴 성공 시 모든 쿠키 삭제
+      deleteCookie('accessToken');
+      deleteCookie('loginType');
+
+      setTimeout(() => router.push('/front/account/login'), 2000);
     } catch (error) {
       console.error('[회원 탈퇴 요청 오류]', error);
       setErrorMsg('서버 오류가 발생했습니다.');
