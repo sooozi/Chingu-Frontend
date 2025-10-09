@@ -460,7 +460,7 @@ export default function FriendDetailPage() {
       <div className="profile-card flex items-center justify-between mb-4 p-4 bg-white rounded-lg shadow-sm gap-2">
         <div className="flex items-center gap-2">
           <Image
-            src={user.profilePictureUrl || '/images/test-profile.png'}
+            src={user.profilePictureUrl || '/images/default-profile.jpg'}
             alt="프로필 사진"
             width={64}
             height={64}

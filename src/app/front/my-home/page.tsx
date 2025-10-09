@@ -466,7 +466,7 @@ export default function MyHome() {
 
       <div className="profile-card flex items-center mb-4 p-4 bg-white rounded-lg shadow-sm gap-2">
         <Image
-          src={profilePictureUrl || '/images/test-profile.png'}
+          src={profilePictureUrl || '/images/default-profile.jpg'}
           alt="프로필 사진"
           width={64}
           height={64}
