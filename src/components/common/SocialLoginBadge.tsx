@@ -11,11 +11,19 @@ export default function SocialLoginBadge({
   socialType,
   className = '',
 }: SocialLoginBadgeProps) {
-  if (!socialType) return null;
+  // 유효한 소셜 타입이 아니면 뱃지 표시하지 않음
+  if (
+    !socialType ||
+    socialType === 'undefined' ||
+    socialType === 'NONE' ||
+    socialType === ''
+  )
+    return null;
 
   const getSocialInfo = (type: string) => {
     switch (type.toLowerCase()) {
       case 'google':
+      case 'oauth':
         return {
           name: 'Google',
           icon: (
@@ -38,43 +46,26 @@ export default function SocialLoginBadge({
               />
             </svg>
           ),
-          bgColor: 'bg-blue-50',
-          textColor: 'text-blue-700',
-          borderColor: 'border-blue-200',
+          bgColor: 'bg-white',
+          textColor: 'text-gray-700',
+          borderColor: 'border-gray-300',
         };
       case 'kakao':
+      case 'kakao_login':
         return {
           name: 'Kakao',
           icon: (
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <rect x="1" y="1" width="25" height="25" rx="4" fill="#FEE500" />
               <path
-                fill="#FEE500"
-                d="M12 3C6.48 3 2 6.48 2 12c0 3.69 2.47 6.86 6 8.25V22l3.5-1.75L15 22v-1.75c3.53-1.39 6-4.56 6-8.25 0-5.52-4.48-10-10-10z"
-              />
-              <path
-                fill="#3C1E1E"
-                d="M12 3C6.48 3 2 6.48 2 12c0 3.69 2.47 6.86 6 8.25V22l3.5-1.75L15 22v-1.75c3.53-1.39 6-4.56 6-8.25 0-5.52-4.48-10-10-10z"
+                d="M12 4c-4.5 0-8 3-8 6.5 0 2 1 3.8 2.5 4.8-.1.8-.5 2.2-1.8 3.4 0 0 2.6-.3 4.4-1.6.8.2 1.7.3 2.7.3 4.5 0 8-3 8-6.5s-3.5-6.5-8-6.5z"
+                fill="#000"
               />
             </svg>
           ),
-          bgColor: 'bg-yellow-50',
-          textColor: 'text-yellow-800',
-          borderColor: 'border-yellow-200',
-        };
-      case 'naver':
-        return {
-          name: 'Naver',
-          icon: (
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path
-                fill="#03C75A"
-                d="M16.273 12.845 7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845Z"
-              />
-            </svg>
-          ),
-          bgColor: 'bg-green-50',
-          textColor: 'text-green-700',
-          borderColor: 'border-green-200',
+          bgColor: 'bg-white',
+          textColor: 'text-gray-700',
+          borderColor: 'border-gray-300',
         };
       default:
         return {
@@ -84,9 +75,9 @@ export default function SocialLoginBadge({
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
           ),
-          bgColor: 'bg-gray-50',
+          bgColor: 'bg-white',
           textColor: 'text-gray-700',
-          borderColor: 'border-gray-200',
+          borderColor: 'border-gray-300',
         };
     }
   };
@@ -95,10 +86,9 @@ export default function SocialLoginBadge({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium border ${socialInfo.bgColor} ${socialInfo.textColor} ${socialInfo.borderColor} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-normal border ${socialInfo.bgColor} ${socialInfo.textColor} ${socialInfo.borderColor} ${className}`}
     >
       {socialInfo.icon}
-      <span>{socialInfo.name}</span>
     </div>
   );
 }

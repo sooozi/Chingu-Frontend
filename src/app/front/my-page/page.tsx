@@ -76,7 +76,6 @@ export default function Mypage() {
     if (!token) return;
 
     const payload = decodeJwtPayload(token);
-    console.log('[마이페이지] JWT payload:', payload);
 
     if (payload?.nickname) {
       setJwtNickname(payload.nickname);
@@ -164,7 +163,10 @@ export default function Mypage() {
         console.log('[마이페이지] JWT에서 소셜 로그인 정보를 찾을 수 없음');
       }
     }
-  }, [setValue]);
+
+    // 최종 socialType 상태 콘솔 출력
+    console.log('[마이페이지] 최종 socialType:', socialType || 'undefined');
+  }, [setValue, socialType]);
 
   useEffect(() => {
     const token = getCookieValue('accessToken');
@@ -235,12 +237,6 @@ export default function Mypage() {
       tokenNickname = '';
     }
 
-    console.log('[마이페이지] JWT에서 추출한 닉네임:', {
-      payloadNickname: payload?.nickname,
-      payloadSub: payload?.sub,
-      tokenNickname: tokenNickname,
-    });
-
     fetch('/api/users/mypage', {
       method: 'GET',
       headers: {
@@ -261,8 +257,6 @@ export default function Mypage() {
       })
       .then((data) => {
         if (!data) return;
-
-        console.log('[마이페이지] API 응답 데이터:', data);
 
         // API 응답에서 socialType 확인
         if (data.socialType) {
@@ -291,13 +285,6 @@ export default function Mypage() {
           );
         }
 
-        console.log('[마이페이지] 닉네임 우선순위:', {
-          apiNickname: data.nickname,
-          tokenNickname: tokenNickname,
-          jwtNickname: jwtNickname,
-          finalNickname: finalNickname,
-        });
-
         reset({
           nickname: finalNickname,
           name: data.name || '',
@@ -310,16 +297,11 @@ export default function Mypage() {
       .catch((err) => {
         console.error('[유저 정보 불러오기 오류]', err);
         // API 호출 실패 시 JWT에서 닉네임 사용
-        console.log('[마이페이지] API 실패, JWT에서 닉네임 사용');
         let finalNickname = tokenNickname || jwtNickname || '';
 
         // default-nickname이면 JWT의 sub 필드 사용
         if (finalNickname === 'default-nickname' && payload?.sub) {
           finalNickname = payload.sub;
-          console.log(
-            '[마이페이지] API 실패 후 default-nickname 감지, JWT sub 사용:',
-            payload.sub
-          );
         }
 
         if (finalNickname) {
@@ -334,10 +316,6 @@ export default function Mypage() {
         // 쿠키에서 소셜 타입 재확인
         const storedLoginType = getCookieValue('loginType');
         if (storedLoginType) {
-          console.log(
-            '[마이페이지] API 실패 후 쿠키에서 소셜 타입 발견:',
-            storedLoginType
-          );
           setSocialType(storedLoginType);
           deleteCookie('loginType');
         }
@@ -594,19 +572,15 @@ export default function Mypage() {
         className="mb-4 p-4 pr-1 bg-white rounded-lg shadow-sm gap-2 max-h-[410px] overflow-y-auto scroll-overlay"
         style={{ scrollbarGutter: 'stable' }}
       >
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold mb-2">내 정보</h3>
+            <h3 className="text-lg font-semibold">내 정보</h3>
             <SocialLoginBadge socialType={socialType} />
-            {/* socialType 상태 확인 */}
-            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              socialType: {socialType || 'undefined'}
-            </div>
           </div>
           <Button
             type="button"
             onClick={() => setIsEditable(true)}
-            className="!text-xs !p-2 !bg-[#aa96fc] text-white mb-4"
+            className="!text-xs !p-2 !bg-[#aa96fc] text-white"
           >
             마이페이지 수정
           </Button>
