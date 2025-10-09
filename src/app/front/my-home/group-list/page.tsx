@@ -34,7 +34,13 @@ export default function GroupList() {
   // 그룹 목록 조회 함수
   const fetchGroups = async () => {
     const token = getCookieValue('accessToken');
-    if (!token) return;
+    console.log('[그룹 조회] 토큰:', token ? '존재' : '없음');
+    console.log('[그룹 조회] 토큰 값:', token);
+
+    if (!token) {
+      console.error('[그룹 조회] 토큰이 없습니다.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/groups/mygroups', {
@@ -44,7 +50,13 @@ export default function GroupList() {
         },
       });
 
-      if (!res.ok) throw new Error('그룹 목록 조회 실패');
+      console.log('[그룹 조회] 응답 상태:', res.status);
+
+      if (!res.ok) {
+        console.error('[그룹 조회] 응답 실패:', res.status, res.statusText);
+        throw new Error('그룹 목록 조회 실패');
+      }
+
       const data = await res.json();
       setGroups(data);
       console.log('[그룹 목록 갱신]', data);
@@ -56,7 +68,13 @@ export default function GroupList() {
   // 초대 목록 조회 함수
   const fetchInvites = async () => {
     const token = getCookieValue('accessToken');
-    if (!token) return;
+    console.log('[초대 조회] 토큰:', token ? '존재' : '없음');
+    console.log('[초대 조회] 토큰 값:', token);
+
+    if (!token) {
+      console.error('[초대 조회] 토큰이 없습니다.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/groups/invites', {
@@ -66,7 +84,13 @@ export default function GroupList() {
         },
       });
 
-      if (!res.ok) throw new Error('초대 목록 조회 실패');
+      console.log('[초대 조회] 응답 상태:', res.status);
+
+      if (!res.ok) {
+        console.error('[초대 조회] 응답 실패:', res.status, res.statusText);
+        throw new Error('초대 목록 조회 실패');
+      }
+
       const data = await res.json();
       setInvites(data);
       setRefreshKey((prev) => prev + 1); // 강제 리렌더링

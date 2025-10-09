@@ -43,11 +43,18 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('[OAuth 토큰 교환 성공]', data);
+    console.log('[OAuth 토큰 교환 성공]', {
+      hasAccessToken: Boolean(data.accessToken),
+      tokenLength: data.accessToken?.length,
+      tokenStart: data.accessToken?.substring(0, 20) + '...',
+      socialType: data.socialType,
+      fullData: data,
+    });
 
     // 토큰을 쿠키로 설정하고 메인 페이지로 리다이렉트
+    const socialType = data.socialType || 'oauth';
     const redirectResponse = NextResponse.redirect(
-      new URL('/front/my-home?socialType=oauth', req.url)
+      new URL(`/front/my-home?socialType=${socialType}`, req.url)
     );
 
     if (data.accessToken) {
@@ -59,12 +66,14 @@ export async function GET(req: NextRequest) {
       });
 
       // OAuth 로그인 시 소셜 타입 쿠키도 설정
-      redirectResponse.cookies.set('loginType', 'oauth', {
+      redirectResponse.cookies.set('loginType', socialType, {
         path: '/',
         secure: true,
         sameSite: 'lax',
-        maxAge: 300, // 5분
+        maxAge: 60 * 60 * 24 * 7, // 7일 (accessToken과 동일)
       });
+
+      console.log('[OAuth 콜백] 설정된 socialType:', socialType);
     }
 
     return redirectResponse;

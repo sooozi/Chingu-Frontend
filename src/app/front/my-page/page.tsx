@@ -91,6 +91,7 @@ export default function Mypage() {
     const urlParams = new URLSearchParams(window.location.search);
     const urlSocialType = urlParams.get('socialType');
     if (urlSocialType) {
+      console.log('[마이페이지] URL에서 소셜 타입 감지:', urlSocialType);
       setSocialType(urlSocialType);
       // URL 파라미터 제거
       const newUrl = window.location.pathname;
@@ -101,6 +102,7 @@ export default function Mypage() {
     // 2. 쿠키에서 소셜 타입 확인
     const storedLoginType = getCookieValue('loginType');
     if (storedLoginType) {
+      console.log('[마이페이지] 쿠키에서 소셜 타입 감지:', storedLoginType);
       setSocialType(storedLoginType);
       // 쿠키 유지 (다른 페이지에서도 사용 가능)
       return;
@@ -149,9 +151,10 @@ export default function Mypage() {
       }
 
       if (!socialTypeFound) {
+        console.log('[마이페이지] JWT에서 소셜 타입을 찾을 수 없음');
       }
     }
-  }, [setValue, socialType]);
+  }, [setValue]);
 
   useEffect(() => {
     const token = getCookieValue('accessToken');
@@ -296,7 +299,7 @@ export default function Mypage() {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [router, reset, jwtNickname, socialType]);
+  }, [router, reset, jwtNickname]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // 하루 1개 업로드 제한 체크
@@ -338,11 +341,6 @@ export default function Mypage() {
   };
 
   const handlePasswordEdit = () => {
-    const getCookieValue = (name: string) => {
-      const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
-      return match ? decodeURIComponent(match[2]) : null;
-    };
-
     const token = getCookieValue('accessToken');
     if (!token) {
       alert('로그인이 필요합니다.');
@@ -365,11 +363,6 @@ export default function Mypage() {
   };
 
   const handleWithdraw = () => {
-    const getCookieValue = (name: string) => {
-      const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
-      return match ? decodeURIComponent(match[2]) : null;
-    };
-
     const token = getCookieValue('accessToken');
     if (!token) {
       alert('로그인이 필요합니다.');
@@ -392,11 +385,6 @@ export default function Mypage() {
     // 중복 실행 방지
     if (isSubmitting) return;
     setIsSubmitting(true);
-
-    const getCookieValue = (name: string) => {
-      const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
-      return match ? decodeURIComponent(match[2]) : null;
-    };
 
     const token = getCookieValue('accessToken');
     if (!token) {

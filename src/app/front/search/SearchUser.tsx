@@ -52,7 +52,12 @@ export default function SearchUser() {
 
       try {
         const url = `/api/users/search?keyword=${encodeURIComponent(keyword)}`;
-        console.log('[검색 요청]', { url, hasToken: Boolean(token) });
+        console.log('[검색 요청]', {
+          url,
+          hasToken: Boolean(token),
+          tokenLength: token?.length,
+          tokenStart: token?.substring(0, 20) + '...',
+        });
 
         // Authorization 헤더 포함 요청
         const res = await fetch(url, {
@@ -61,6 +66,12 @@ export default function SearchUser() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
+        });
+
+        console.log('[검색 응답]', {
+          status: res.status,
+          statusText: res.statusText,
+          ok: res.ok,
         });
 
         const data = await res.json();

@@ -25,12 +25,24 @@ export async function GET(req: NextRequest) {
       ? `${API_BASE}/api/users/search?keyword=${encodeURIComponent(keyword)}`
       : `${API_BASE}/api/users/search`;
 
+    console.log('[검색 API] 백엔드 요청:', {
+      url,
+      hasToken: Boolean(token),
+      tokenStart: token?.substring(0, 20) + '...',
+    });
+
     const res = await fetch(url, {
       method: 'GET',
       headers: {
         Authorization: token,
         'Content-Type': 'application/json',
       },
+    });
+
+    console.log('[검색 API] 백엔드 응답:', {
+      status: res.status,
+      statusText: res.statusText,
+      ok: res.ok,
     });
 
     const contentType = res.headers.get('content-type') || '';
