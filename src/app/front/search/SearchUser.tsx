@@ -51,8 +51,8 @@ export default function SearchUser() {
       }
 
       try {
-        // 직접 백엔드로 요청 (프록시 우회)
-        const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/users/search?keyword=${encodeURIComponent(keyword)}`;
+        // 프록시를 통해 요청 (백엔드 JWT 인증 설정 문제 해결 전까지)
+        const backendUrl = `/api/users/search?keyword=${encodeURIComponent(keyword)}`;
         console.log('[검색 요청]', {
           url: backendUrl,
           hasToken: Boolean(token),
@@ -81,6 +81,12 @@ export default function SearchUser() {
           return atob(str);
         };
 
+        // 토큰 전처리 및 검증
+        let cleanToken = token;
+        if (token && token.startsWith('Bearer ')) {
+          cleanToken = token.replace('Bearer ', '');
+        }
+
         // 토큰 상세 분석
         let payload: {
           exp?: number;
@@ -94,9 +100,9 @@ export default function SearchUser() {
           authorities?: string[];
           alg?: string;
         } | null = null;
-        if (token) {
+        if (cleanToken) {
           try {
-            const tokenParts = token.replace('Bearer ', '').split('.');
+            const tokenParts = cleanToken.split('.');
             if (tokenParts.length === 3) {
               payload = JSON.parse(base64UrlDecode(tokenParts[1]));
               console.log('🔍 [프론트엔드] 토큰 페이로드:', {
@@ -127,7 +133,6 @@ export default function SearchUser() {
                   ? Math.round((payload.exp * 1000 - Date.now()) / 1000 / 60) +
                     '분'
                   : 'N/A',
-                // 추가 필드들
                 iss: payload?.iss,
                 aud: payload?.aud,
                 roles: payload?.roles,
@@ -169,12 +174,23 @@ export default function SearchUser() {
           return;
         }
 
-        // Authorization 헤더 포함 요청
+        // 토큰 유효성 추가 검증
+        if (!cleanToken || cleanToken.length < 10) {
+          console.log('⚠️ [토큰 무효] 토큰이 유효하지 않습니다.');
+          alert('인증 토큰이 유효하지 않습니다. 다시 로그인해주세요.');
+          window.location.href = '/front/account/login';
+          return;
+        }
+
+        // Authorization 헤더 포함 요청 (다양한 형식 시도)
         const res = await fetch(backendUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
+            // 추가 헤더들
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: 'application/json',
           },
         });
 
@@ -195,7 +211,7 @@ export default function SearchUser() {
           // 로그인 시 친구 목록업데이트
           try {
             if (token) {
-              const friendsUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/friends`;
+              const friendsUrl = `/api/friends`;
               const friendsResponse = await fetch(friendsUrl, {
                 headers: { Authorization: `Bearer ${token}` },
               });
@@ -223,6 +239,20 @@ export default function SearchUser() {
             setErrorMsg('찾으시는 친구가 없어요');
           }
         } else {
+          // 401 오류 시 특별 처리
+          if (res.status === 401) {
+            console.log('🔒 [인증 오류] 401 Unauthorized - 토큰 재검증 필요');
+            setErrorMsg('인증이 필요합니다. 다시 로그인해주세요.');
+            // 토큰 삭제 후 로그인 페이지로 이동
+            document.cookie =
+              'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie =
+              'loginType=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            setTimeout(() => {
+              window.location.href = '/front/account/login';
+            }, 1500);
+            return;
+          }
           setErrorMsg(data.message || '검색에 실패했습니다.');
         }
       } catch (err) {
@@ -251,7 +281,7 @@ export default function SearchUser() {
     try {
       setRequestingFriends((prev) => new Set(prev).add(friendId));
 
-      const requestUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/friends/request`;
+      const requestUrl = `/api/friends/request`;
       const response = await fetch(requestUrl, {
         method: 'POST',
         headers: {
