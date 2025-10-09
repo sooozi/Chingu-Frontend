@@ -10,7 +10,7 @@ import CheckableInput from '@/components/common/CheckableInput';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import SocialLoginBadge from '@/components/common/SocialLoginBadge';
-import { getCookieValue, deleteCookie } from '@/utils/cookie';
+import { getCookieValue } from '@/utils/cookie';
 
 const MypageSchema = z.object({
   nickname: z.string().min(2, '닉네임은 2자 이상 입력해주세요.'),
@@ -107,8 +107,7 @@ export default function Mypage() {
     if (storedLoginType) {
       console.log('[마이페이지] 쿠키에서 소셜 타입 발견:', storedLoginType);
       setSocialType(storedLoginType);
-      // 쿠키에서 제거 (한 번만 사용)
-      deleteCookie('loginType');
+      // 쿠키 유지 (다른 페이지에서도 사용 가능)
       return;
     }
 
@@ -317,7 +316,7 @@ export default function Mypage() {
         const storedLoginType = getCookieValue('loginType');
         if (storedLoginType) {
           setSocialType(storedLoginType);
-          deleteCookie('loginType');
+          // deleteCookie('loginType');
         }
       });
 

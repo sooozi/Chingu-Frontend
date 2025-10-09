@@ -4,7 +4,7 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { getCookieValue, deleteCookie } from '@/utils/cookie';
+import { getCookieValue } from '@/utils/cookie';
 
 export default function MypageDeleteAccount() {
   const router = useRouter();
@@ -35,8 +35,7 @@ export default function MypageDeleteAccount() {
         if (storedLoginType) {
           console.log('[회원 탈퇴] 쿠키에서 소셜 타입 발견:', storedLoginType);
           setIsSocialLogin(true);
-          // 쿠키에서 제거 (한 번만 사용)
-          deleteCookie('loginType');
+          // 쿠키 유지 (다른 페이지에서도 사용 가능)
           return;
         }
 
@@ -97,8 +96,19 @@ export default function MypageDeleteAccount() {
         }
       } catch (error) {
         console.error('[회원 탈퇴] 소셜 로그인 확인 오류:', error);
-        // 오류 시 기본값으로 일반 로그인으로 설정
-        setIsSocialLogin(false);
+        // API 호출 실패 시에도 쿠키에서 재확인
+        const fallbackLoginType = getCookieValue('loginType');
+        if (fallbackLoginType) {
+          console.log(
+            '[회원 탈퇴] API 실패 후 쿠키에서 소셜 타입 재확인:',
+            fallbackLoginType
+          );
+          setIsSocialLogin(true);
+          // 쿠키 유지 (다른 페이지에서도 사용 가능)
+        } else {
+          // 오류 시 기본값으로 일반 로그인으로 설정
+          setIsSocialLogin(false);
+        }
       }
     };
 
@@ -140,8 +150,9 @@ export default function MypageDeleteAccount() {
       return;
     }
 
-    // 일반 로그인 사용자: 비밀번호 확인
+    // 소셜 로그인 여부에 따른 처리
     if (!isSocialLogin) {
+      // 일반 로그인 사용자: 비밀번호 확인
       if (!password.trim()) {
         setErrorMsg('비밀번호를 입력해주세요.');
         return;
