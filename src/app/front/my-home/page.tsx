@@ -406,20 +406,15 @@ export default function MyHome() {
   useEffect(() => {
     // accessToken payload에서 nickname 추출
     const token = getCookieValue('accessToken');
-    console.log('[마이홈] JWT 토큰:', token);
 
     if (!token) return;
 
     const payload = decodeJwtPayload(token);
-    console.log('[마이홈] JWT payload:', payload);
-    console.log('[마이홈] JWT 토큰 전체 키들:', Object.keys(payload || {}));
 
     if (payload?.nickname) {
       setNickname(payload.nickname);
-      console.log('[마이홈] 추출한 닉네임:', payload.nickname);
     } else if (payload?.sub) {
       setNickname(payload.sub);
-      console.log('[마이홈] 추출한 sub:', payload.sub);
     }
   }, []);
 

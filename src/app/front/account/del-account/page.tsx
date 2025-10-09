@@ -203,9 +203,12 @@ export default function MypageDeleteAccount() {
         // 401 Unauthorized 처리
         if (res.status === 401) {
           setErrorMsg('세션이 만료되었습니다. 다시 로그인해주세요.');
+          // 모든 쿠키 삭제
+          deleteCookie('accessToken');
+          deleteCookie('loginType');
           setTimeout(() => {
             router.push('/front/account/login');
-          }, 2000);
+          }, 1500);
           return;
         }
 

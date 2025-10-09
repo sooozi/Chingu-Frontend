@@ -90,9 +90,7 @@ export default function Mypage() {
     // 1. URL 파라미터에서 소셜 타입 확인
     const urlParams = new URLSearchParams(window.location.search);
     const urlSocialType = urlParams.get('socialType');
-    console.log('[마이페이지] URL 파라미터 확인:', urlSocialType);
     if (urlSocialType) {
-      console.log('[마이페이지] URL에서 소셜 타입 발견:', urlSocialType);
       setSocialType(urlSocialType);
       // URL 파라미터 제거
       const newUrl = window.location.pathname;
@@ -101,11 +99,8 @@ export default function Mypage() {
     }
 
     // 2. 쿠키에서 소셜 타입 확인
-    console.log('[마이페이지] 모든 쿠키:', document.cookie);
     const storedLoginType = getCookieValue('loginType');
-    console.log('[마이페이지] loginType 쿠키 값:', storedLoginType);
     if (storedLoginType) {
-      console.log('[마이페이지] 쿠키에서 소셜 타입 발견:', storedLoginType);
       setSocialType(storedLoginType);
       // 쿠키 유지 (다른 페이지에서도 사용 가능)
       return;
@@ -113,10 +108,8 @@ export default function Mypage() {
 
     // 3. JWT에서 소셜 타입 확인 (기존 로직)
     if (payload?.socialType) {
-      console.log('[마이페이지] JWT에서 socialType 발견:', payload.socialType);
       setSocialType(payload.socialType);
     } else {
-      console.log('[마이페이지] JWT에서 socialType 없음, 다른 필드 확인 중...');
       // 다른 가능한 필드명들 확인
       const possibleSocialFields = [
         'social_type',
@@ -135,7 +128,6 @@ export default function Mypage() {
       for (const field of possibleSocialFields) {
         if (payload?.[field] && typeof payload[field] === 'string') {
           const value = payload[field] as string;
-          console.log(`[마이페이지] 필드 ${field} 값:`, value);
 
           // 카카오 관련 키워드 확인
           if (
@@ -143,14 +135,12 @@ export default function Mypage() {
             value.toLowerCase().includes('kakao.com') ||
             value.toLowerCase().includes('kakaoaccount')
           ) {
-            console.log('[마이페이지] 카카오 로그인 감지됨');
             setSocialType('kakao');
             socialTypeFound = true;
             break;
           }
           // 구글 관련 키워드 확인
           if (value.toLowerCase().includes('google')) {
-            console.log('[마이페이지] 구글 로그인 감지됨');
             setSocialType('google');
             socialTypeFound = true;
             break;
@@ -159,12 +149,8 @@ export default function Mypage() {
       }
 
       if (!socialTypeFound) {
-        console.log('[마이페이지] JWT에서 소셜 로그인 정보를 찾을 수 없음');
       }
     }
-
-    // 최종 socialType 상태 콘솔 출력
-    console.log('[마이페이지] 최종 socialType:', socialType || 'undefined');
   }, [setValue, socialType]);
 
   useEffect(() => {
@@ -176,9 +162,6 @@ export default function Mypage() {
     const urlParams = new URLSearchParams(window.location.search);
     const shouldRefresh = urlParams.get('refresh');
     if (shouldRefresh) {
-      console.log(
-        '[마이페이지] 새로고침 파라미터 감지, 사용자 정보 강제 새로고침'
-      );
       // URL에서 refresh 파라미터 제거
       const newUrl = window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
@@ -259,16 +242,10 @@ export default function Mypage() {
 
         // API 응답에서 socialType 확인
         if (data.socialType) {
-          console.log('[마이페이지] API에서 socialType 발견:', data.socialType);
           setSocialType(data.socialType);
         } else if (data.provider) {
-          console.log('[마이페이지] API에서 provider 발견:', data.provider);
           setSocialType(data.provider);
         } else if (data.social_type) {
-          console.log(
-            '[마이페이지] API에서 social_type 발견:',
-            data.social_type
-          );
           setSocialType(data.social_type);
         }
 
@@ -278,10 +255,6 @@ export default function Mypage() {
         // default-nickname이면 JWT의 sub 필드 사용
         if (finalNickname === 'default-nickname' && payload?.sub) {
           finalNickname = payload.sub;
-          console.log(
-            '[마이페이지] default-nickname 감지, JWT sub 사용:',
-            payload.sub
-          );
         }
 
         reset({
@@ -384,9 +357,7 @@ export default function Mypage() {
       socialType !== 'NONE' &&
       socialType !== ''
     ) {
-      alert(
-        '소셜 로그인 사용자는 비밀번호를 설정할 수 없습니다.\n소셜 로그인 계정의 비밀번호는 해당 소셜 플랫폼에서 관리됩니다.'
-      );
+      alert('소셜 로그인 사용자는 비밀번호를 설정할 수 없습니다.');
       return;
     }
 

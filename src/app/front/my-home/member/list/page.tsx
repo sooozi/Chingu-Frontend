@@ -30,6 +30,7 @@ export default function MemberDetail() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const [invitedFriends, setInvitedFriends] = useState<Set<number>>(new Set());
   const [groupId, setGroupId] = useState<string | null>(null);
 
   const router = useRouter();
@@ -151,6 +152,9 @@ export default function MemberDetail() {
       }
 
       alert(`${friend.nickname}님을 그룹에 초대했습니다.`);
+
+      // 초대한 친구를 invitedFriends에 추가
+      setInvitedFriends((prev) => new Set(prev).add(friend.friendUserId));
     } catch (error) {
       console.error('[그룹 초대 오류]', error);
       alert(
@@ -289,10 +293,17 @@ export default function MemberDetail() {
                   <Button
                     type="button"
                     onClick={() => handleInviteToGroup(friend)}
-                    disabled={isInviting}
-                    className="text-xs px-2 py-1 bg-point1-color disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors duration-200"
+                    disabled={
+                      isInviting || invitedFriends.has(friend.friendUserId)
+                    }
+                    className="!px-2 !py-1 bg-point1-color disabled:opacity-50 disabled:cursor-not-allowed !rounded-full transition-colors duration-200"
                   >
-                    {isInviting ? (
+                    {invitedFriends.has(friend.friendUserId) ? (
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>초대 중...</span>
+                      </div>
+                    ) : isInviting ? (
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         <span>초대 중...</span>
