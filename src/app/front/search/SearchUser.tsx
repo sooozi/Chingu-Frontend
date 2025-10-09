@@ -182,13 +182,13 @@ export default function SearchUser() {
           return;
         }
 
-        // Authorization 헤더 포함 요청 (다양한 형식 시도)
+        // 공개 API이므로 Authorization 헤더 제거 (소셜 로그인 토큰 문제 해결)
+        console.log('🔓 [검색 요청] Authorization 헤더 제거됨 - 공개 API');
         const res = await fetch(backendUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            // 추가 헤더들
+            // Authorization 헤더 제거 - 공개 API이므로 인증 불필요
             'X-Requested-With': 'XMLHttpRequest',
             Accept: 'application/json',
           },
@@ -200,20 +200,30 @@ export default function SearchUser() {
           ok: res.ok,
         });
 
-        const data = await res.json();
+        // 에러 응답 파싱 방어 (401/500일 때 HTML/빈 응답 처리)
+        let data: { message?: string; users?: User[] } | null = null;
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { message: text || '알 수 없는 오류가 발생했습니다.' };
+        }
 
         if (res.ok) {
-          const sorted: User[] = (data.users ?? []).sort((a: User, b: User) =>
+          const sorted: User[] = (data?.users ?? []).sort((a: User, b: User) =>
             (a.nickname ?? '').localeCompare(b.nickname ?? '')
           );
           console.log('[검색 결과] 정렬된 사용자 목록:', sorted);
 
-          // 로그인 시 친구 목록업데이트
+          // 로그인 시 친구 목록업데이트 (공개 API로 가정하여 Authorization 제거)
           try {
             if (token) {
               const friendsUrl = `/api/friends`;
               const friendsResponse = await fetch(friendsUrl, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: {
+                  'Content-Type': 'application/json',
+                  // Authorization 헤더 제거 - 공개 API로 가정
+                },
               });
 
               if (friendsResponse.ok) {
@@ -253,7 +263,7 @@ export default function SearchUser() {
             }, 1500);
             return;
           }
-          setErrorMsg(data.message || '검색에 실패했습니다.');
+          setErrorMsg(data?.message || '검색에 실패했습니다.');
         }
       } catch (err) {
         console.error('[유저 검색 실패]', err);
@@ -286,7 +296,7 @@ export default function SearchUser() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // 친구 신청은 인증 필요
         },
         body: JSON.stringify({ friendId }),
       });
