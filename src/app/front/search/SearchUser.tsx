@@ -59,6 +59,62 @@ export default function SearchUser() {
           tokenStart: token?.substring(0, 20) + '...',
         });
 
+        // 요청 직전 로깅
+        console.log('[AUTH]', {
+          tokenSnippet: token?.slice(0, 20),
+          header: `Bearer ${token}`,
+          tokenLength: token?.length,
+          tokenStart: token?.substring(0, 30) + '...',
+        });
+
+        // 토큰 상세 분석
+        if (token) {
+          try {
+            const tokenParts = token.replace('Bearer ', '').split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log('🔍 [프론트엔드] 토큰 페이로드:', {
+                sub: payload.sub,
+                id: payload.id,
+                nickname: payload.nickname,
+                iat: payload.iat,
+                exp: payload.exp,
+                expDate: new Date(payload.exp * 1000).toISOString(),
+                isExpired: Date.now() > payload.exp * 1000,
+                timeUntilExpiry:
+                  Math.round((payload.exp * 1000 - Date.now()) / 1000 / 60) +
+                  '분',
+                // 추가 필드들
+                iss: payload.iss,
+                aud: payload.aud,
+                roles: payload.roles,
+                authorities: payload.authorities,
+                alg: payload.alg,
+              });
+            }
+          } catch (e) {
+            console.error('❌ [프론트엔드] 토큰 파싱 오류:', e);
+          }
+        }
+
+        // 테스트: Authorization 없이 요청 (한 번만)
+        if (Math.random() < 0.1) {
+          // 10% 확률로 테스트
+          console.log('🧪 [테스트] Authorization 없이 요청 시도');
+          const testRes = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              // Authorization 헤더 없음
+            },
+          });
+          console.log('🧪 [테스트ㅇㅇdd] 결과:', {
+            status: testRes.status,
+            statusText: testRes.statusText,
+            ok: testRes.ok,
+          });
+        }
+
         // Authorization 헤더 포함 요청
         const res = await fetch(url, {
           method: 'GET',

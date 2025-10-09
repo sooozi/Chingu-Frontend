@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
+  console.log('🚀 [검색 API] 함수 시작됨!');
+
   const API_BASE = process.env.API_BASE_URL;
   const token = req.headers.get('authorization');
   const { searchParams } = new URL(req.url);
   const keyword = searchParams.get('keyword');
+
+  console.log('🔍 [검색 API] 요청 시작:', {
+    hasToken: Boolean(token),
+    tokenLength: token?.length,
+    keyword: keyword,
+    url: req.url,
+  });
 
   if (!API_BASE) {
     return NextResponse.json(
@@ -14,6 +23,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (!token || !token.startsWith('Bearer')) {
+    console.log('[검색 API] 토큰 없음:', { token: token });
     return NextResponse.json(
       { message: '인증 토큰이 없습니다.' },
       { status: 401 }
@@ -29,28 +39,8 @@ export async function GET(req: NextRequest) {
       url,
       hasToken: Boolean(token),
       tokenStart: token?.substring(0, 20) + '...',
+      authorizationHeader: token,
     });
-
-    // 토큰 상세 분석
-    if (token) {
-      try {
-        const tokenParts = token.replace('Bearer ', '').split('.');
-        if (tokenParts.length === 3) {
-          const payload = JSON.parse(atob(tokenParts[1]));
-          console.log('[검색 API] 토큰 페이로드:', {
-            sub: payload.sub,
-            id: payload.id,
-            nickname: payload.nickname,
-            iat: payload.iat,
-            exp: payload.exp,
-            expDate: new Date(payload.exp * 1000).toISOString(),
-            isExpired: Date.now() > payload.exp * 1000,
-          });
-        }
-      } catch (e) {
-        console.error('[검색 API] 토큰 파싱 오류:', e);
-      }
-    }
 
     const res = await fetch(url, {
       method: 'GET',
@@ -65,6 +55,14 @@ export async function GET(req: NextRequest) {
       statusText: res.statusText,
       ok: res.ok,
     });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.log('[검색 API] 백엔드 오류 상세:', {
+        status: res.status,
+        errorText: errorText,
+      });
+    }
 
     const contentType = res.headers.get('content-type') || '';
 
