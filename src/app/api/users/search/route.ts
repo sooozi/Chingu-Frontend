@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        // Authorization 헤더 제거 - 공개 API이므로 인증 불필요
+        Authorization: token,
         'Content-Type': 'application/json',
       },
     });

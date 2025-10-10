@@ -42,160 +42,23 @@ export default function SearchUser() {
       setIsSearching(true);
       setErrorMsg('');
 
-      // 토큰 체크 제거
-      // if (!token) {
-      //   setErrorMsg('로그인이 필요합니다.');
-      //   setIsSearching(false);
-      //   return;
-      // }
+      if (!token) {
+        setErrorMsg('로그인이 필요합니다.');
+        setIsSearching(false);
+        return;
+      }
 
       try {
-        // 프록시를 통해 요청 (백엔드 JWT 인증 설정 문제 해결 전까지)
         const backendUrl = `/api/users/search?keyword=${encodeURIComponent(keyword)}`;
-        console.log('[검색 요청]', {
-          url: backendUrl,
-          hasToken: Boolean(token),
-          tokenLength: token?.length,
-          tokenStart: token?.substring(0, 20) + '...',
-        });
 
-        // 요청 직전 로깅
-        console.log('[AUTH]', {
-          tokenSnippet: token?.slice(0, 20),
-          header: `Bearer ${token}`,
-          tokenLength: token?.length,
-          tokenStart: token?.substring(0, 30) + '...',
-        });
-
-        // Base64URL 디코딩 함수
-        const base64UrlDecode = (str: string): string => {
-          // Base64URL을 Base64로 변환
-          str = str.replace(/-/g, '+').replace(/_/g, '/');
-
-          // 패딩 추가
-          while (str.length % 4) {
-            str += '=';
-          }
-
-          return atob(str);
-        };
-
-        // 토큰 전처리 및 검증
-        let cleanToken = token;
-        if (token && token.startsWith('Bearer ')) {
-          cleanToken = token.replace('Bearer ', '');
-        }
-
-        // 토큰 상세 분석
-        let payload: {
-          exp?: number;
-          iat?: number;
-          sub?: string;
-          id?: number;
-          nickname?: string;
-          iss?: string;
-          aud?: string;
-          roles?: string[];
-          authorities?: string[];
-          alg?: string;
-        } | null = null;
-        if (cleanToken) {
-          try {
-            const tokenParts = cleanToken.split('.');
-            if (tokenParts.length === 3) {
-              payload = JSON.parse(base64UrlDecode(tokenParts[1]));
-              console.log('🔍 [프론트엔드] 토큰 페이로드:', {
-                sub: payload?.sub,
-                id: payload?.id,
-                nickname: payload?.nickname,
-                iat: payload?.iat,
-                exp: payload?.exp,
-                expDate: payload?.exp
-                  ? new Date(payload.exp * 1000).toISOString()
-                  : 'N/A',
-                isExpired: payload?.exp
-                  ? Date.now() > payload.exp * 1000
-                  : false,
-                // 토큰 시간 상세 분석
-                currentTime: new Date().toISOString(),
-                issuedAt: payload?.iat
-                  ? new Date(payload.iat * 1000).toISOString()
-                  : 'N/A',
-                expiresAt: payload?.exp
-                  ? new Date(payload.exp * 1000).toISOString()
-                  : 'N/A',
-                timeSinceIssued: payload?.iat
-                  ? Math.round((Date.now() - payload.iat * 1000) / 1000 / 60) +
-                    '분'
-                  : 'N/A',
-                timeUntilExpiry: payload?.exp
-                  ? Math.round((payload.exp * 1000 - Date.now()) / 1000 / 60) +
-                    '분'
-                  : 'N/A',
-                iss: payload?.iss,
-                aud: payload?.aud,
-                roles: payload?.roles,
-                authorities: payload?.authorities,
-                alg: payload?.alg,
-              });
-            }
-          } catch (e) {
-            console.error('❌ [프론트엔드] 토큰 파싱 오류:', e);
-          }
-        }
-
-        // 테스트: Authorization 없이 요청 (한 번만)
-        if (Math.random() < 0.1) {
-          // 10% 확률로 테스트
-          console.log('🧪 [테스트] Authorization 없이 요청 시도');
-          const testRes = await fetch(backendUrl, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              // Authorization 헤더 없음
-            },
-          });
-          console.log('🧪 [테스트] 결과:', {
-            status: testRes.status,
-            statusText: testRes.statusText,
-            ok: testRes.ok,
-          });
-        }
-
-        // 토큰 만료 확인 제거
-        // if (payload && payload.exp && Date.now() > payload.exp * 1000) {
-        //   console.log(
-        //     '⚠️ [토큰 만료] 토큰이 만료되었습니다. 로그인이 필요합니다.'
-        //   );
-        //   alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-        //   // 로그인 페이지로 리다이렉트
-        //   window.location.href = '/front/account/login';
-        //   return;
-        // }
-
-        // 토큰 유효성 검증 제거
-        // if (!cleanToken || cleanToken.length < 10) {
-        //   console.log('⚠️ [토큰 무효] 토큰이 유효하지 않습니다.');
-        //   alert('인증 토큰이 유효하지 않습니다. 다시 로그인해주세요.');
-        //   window.location.href = '/front/account/login';
-        //   return;
-        // }
-
-        // 공개 API이므로 Authorization 헤더 제거 (소셜 로그인 JWT 문제 해결)
         const res = await fetch(backendUrl, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Authorization 헤더 제거 - 공개 API이므로 인증 불필요
+            Authorization: `Bearer ${token}`,
             'X-Requested-With': 'XMLHttpRequest',
             Accept: 'application/json',
           },
-        });
-
-        console.log('[검색 응답]', {
-          status: res.status,
-          statusText: res.statusText,
-          ok: res.ok,
         });
 
         // 에러 응답 파싱 방어 (401/500일 때 HTML/빈 응답 처리)
@@ -211,7 +74,6 @@ export default function SearchUser() {
           const sorted: User[] = (data?.users ?? []).sort((a: User, b: User) =>
             (a.nickname ?? '').localeCompare(b.nickname ?? '')
           );
-          console.log('[검색 결과] 정렬된 사용자 목록:', sorted);
 
           // 로그인 시 친구 목록업데이트
           try {
@@ -235,8 +97,7 @@ export default function SearchUser() {
             } else {
               setUsers(sorted);
             }
-          } catch (friendsError) {
-            console.error('[친구 목록 조회 실패]', friendsError);
+          } catch {
             setUsers(sorted);
           }
 
@@ -244,21 +105,9 @@ export default function SearchUser() {
             setErrorMsg('찾으시는 친구가 없어요');
           }
         } else {
-          // 401 오류 시 특별 처리 제거
-          // if (res.status === 401) {
-          //   console.log('🔒 [인증 오류] 401 Unauthorized - 토큰 재검증 필요');
-          //   setErrorMsg('인증이 필요합니다. 다시 로그인해주세요.');
-          //   // 토큰 삭제 후 로그인 페이지로 이동
-          //   document.cookie =
-          //     'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          //   document.cookie =
-          //     'loginType=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          //   return;
-          // }
           setErrorMsg(data?.message || '검색에 실패했습니다.');
         }
-      } catch (err) {
-        console.error('[유저 검색 실패]', err);
+      } catch {
         setErrorMsg('검색 중 오류가 발생했습니다.');
       } finally {
         setIsSearching(false);
@@ -271,13 +120,6 @@ export default function SearchUser() {
   const handleFriendRequest = async (friendId: number) => {
     const token = getToken();
 
-    // 토큰 체크 제거
-    // if (!token) {
-    //   alert('로그인이 필요합니다.');
-    //   router.replace('/front/account/login');
-    //   return;
-    // }
-
     // 요청 중복 방지
     if (requestingFriends.has(friendId)) return;
 
@@ -289,7 +131,7 @@ export default function SearchUser() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // 친구 신청은 인증 필요
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ friendId }),
       });
@@ -309,8 +151,7 @@ export default function SearchUser() {
         }
         alert(data.message || '친구 신청에 실패했습니다.');
       }
-    } catch (error) {
-      console.error('[친구 신청 오류]', error);
+    } catch {
       alert('친구 신청 중 오류가 발생했습니다.');
     } finally {
       setRequestingFriends((prev) => {
