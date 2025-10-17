@@ -15,6 +15,28 @@ interface Message {
   receiverDeleted: boolean;
 }
 
+// UTC 시간을 한국 시간으로 변환하는 함수
+const formatToKoreanTime = (utcTimeString: string) => {
+  // UTC 시간을 Date 객체로 변환
+  const date = new Date(utcTimeString);
+
+  // 한국 시간은 UTC+9이므로 9시간을 추가
+  const koreanTime = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+
+  // 한국 시간대로 포맷팅
+  const year = koreanTime.getFullYear();
+  const month = String(koreanTime.getMonth() + 1).padStart(2, '0');
+  const day = String(koreanTime.getDate()).padStart(2, '0');
+  let hour = koreanTime.getHours();
+  const minute = String(koreanTime.getMinutes()).padStart(2, '0');
+  const period = hour >= 12 ? '오후' : '오전';
+
+  if (hour > 12) hour -= 12;
+  if (hour === 0) hour = 12;
+
+  return `${year}. ${month}. ${day}. ${period} ${String(hour).padStart(2, '0')}:${minute}`;
+};
+
 export default function MessageList() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'sent' | 'received'>('received');
@@ -45,8 +67,18 @@ export default function MessageList() {
   const messages = activeTab === 'sent' ? sentMessages : receivedMessages;
 
   return (
-    <div className="my-home-page py-4 px-4 pt-10 mx-auto rounded-lg bg-gray-100">
-      <h2 className="text-2xl font-semibold mb-6 text-center">나의 쪽지함</h2>
+    <div className="my-home-page py-4 px-4 pt-10 pb-10 mx-auto rounded-lg bg-gray-100 overflow-y-auto">
+      <div className="relative mb-6 min-h-[40px] flex items-center justify-center">
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-3 rounded-lg transition-colors bg-gray-200 text-gray-700 absolute left-0 top-1/2 -translate-y-1/2 px-3 py-1 text-sm"
+        >
+          ← 뒤로
+        </button>
+        <h2 className="text-2xl font-semibold text-center w-full">
+          나의 쪽지함
+        </h2>
+      </div>
 
       <div className="flex mb-4 gap-2">
         <button
@@ -94,7 +126,7 @@ export default function MessageList() {
                     : `보낸 사람: ${message.sender}`}
                 </div>
                 <div className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-                  {new Date(message.sendTime).toLocaleString()}
+                  {formatToKoreanTime(message.sendTime)}
                 </div>
               </div>
               <div className="text-gray-800 mb-2 font-medium">

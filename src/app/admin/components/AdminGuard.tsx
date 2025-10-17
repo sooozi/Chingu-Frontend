@@ -26,8 +26,6 @@ export default function AdminGuard({ children }: AdminGuardProps) {
           setIsAdmin(false);
         }
       } catch (error: unknown) {
-        console.error('관리자 권한 확인 실패:', error);
-
         // 401, 403 에러는 권한 없음
         if (
           error &&
@@ -38,6 +36,7 @@ export default function AdminGuard({ children }: AdminGuardProps) {
           'status' in error.response
         ) {
           const status = (error.response as { status: number }).status;
+
           if (status === 401 || status === 403) {
             setIsAdmin(false);
           } else {

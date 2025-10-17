@@ -17,6 +17,28 @@ interface Message {
   receiverDeleted: boolean;
 }
 
+// UTC 시간을 한국 시간으로 변환하는 함수
+const formatToKoreanTime = (utcTimeString: string) => {
+  // UTC 시간을 Date 객체로 변환
+  const date = new Date(utcTimeString);
+
+  // 한국 시간은 UTC+9이므로 9시간을 추가
+  const koreanTime = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+
+  // 한국 시간대로 포맷팅
+  const year = koreanTime.getFullYear();
+  const month = String(koreanTime.getMonth() + 1).padStart(2, '0');
+  const day = String(koreanTime.getDate()).padStart(2, '0');
+  let hour = koreanTime.getHours();
+  const minute = String(koreanTime.getMinutes()).padStart(2, '0');
+  const period = hour >= 12 ? '오후' : '오전';
+
+  if (hour > 12) hour -= 12;
+  if (hour === 0) hour = 12;
+
+  return `${year}. ${month}. ${day}. ${period} ${String(hour).padStart(2, '0')}:${minute}`;
+};
+
 export default function MessageDetail() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -156,7 +178,7 @@ export default function MessageDetail() {
           <h2 className="text-lg font-semibold">쪽지 내용</h2>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">
-              {new Date(message.sendTime).toLocaleString()}
+              {formatToKoreanTime(message.sendTime)}
             </span>
             {!message.readStatus && (
               <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">

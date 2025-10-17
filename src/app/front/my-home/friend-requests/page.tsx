@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axiosInstance from '@/libs/axios';
-import Link from 'next/link';
 import { AxiosError } from 'axios';
 
 interface FriendRequest {
@@ -99,15 +98,17 @@ export default function FriendRequestsPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto p-6">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">받은 친구 요청</h2>
-        <Link
-          href="/front/my-home"
-          className="text-main-color hover:text-sub-color font-medium text-sm transition-colors duration-200 flex items-center gap-1"
+    <div className="my-home-page py-4 px-4 pt-10 pb-10 mx-auto rounded-lg bg-gray-100 overflow-y-auto">
+      <div className="relative mb-6 min-h-[40px] flex items-center justify-center">
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-3 rounded-lg transition-colors bg-gray-200 text-gray-700 absolute left-0 top-1/2 -translate-y-1/2 px-3 py-1 text-sm"
         >
           ← 뒤로
-        </Link>
+        </button>
+        <h2 className="text-2xl font-semibold text-center w-full">
+          받은 친구 요청
+        </h2>
       </div>
 
       {friendRequests.length === 0 ? (

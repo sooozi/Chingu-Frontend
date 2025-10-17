@@ -54,32 +54,17 @@ export default function AdminMain() {
 
   return (
     <AdminGuard>
-      <div className="admin-page py-4 px-4 pt-24 pb-20 mx-auto rounded-lg bg-gray-100 overflow-y-auto">
-        <div className="flex items-center mb-6">
+      <div className="admin-page py-4 px-4 pt-10 pb-10 mx-auto rounded-lg bg-gray-100 overflow-y-auto">
+        <div className="relative mb-6 min-h-[40px] flex items-center justify-center">
           <button
             onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-800 mr-4"
-            aria-label="뒤로가기"
+            className="px-4 py-3 rounded-lg transition-colors bg-gray-200 text-gray-700 absolute left-0 top-1/2 -translate-y-1/2 px-3 py-1 text-sm"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-              />
-            </svg>
+            ← 뒤로
           </button>
-          <h2 className="text-2xl font-semibold text-center flex-1">
+          <h2 className="text-2xl font-semibold text-center w-full">
             관리자 페이지
           </h2>
-          <div className="w-6"></div>
         </div>
 
         {/* 통계 섹션 */}

@@ -296,6 +296,10 @@ main:has(.my-home-page) {
   padding-top: 54px;
   padding-bottom: 70px;
 }
+main:has(.admin-page) {
+  padding-top: 54px;
+  padding-bottom: 70px;
+}
 main,
 main > div {
   height: inherit;

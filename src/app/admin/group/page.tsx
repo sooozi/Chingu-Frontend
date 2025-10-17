@@ -159,34 +159,19 @@ export default function AdminGroup() {
 
   return (
     <AdminGuard>
-      <div className="admin-page py-4 px-4 pt-24 pb-20 mx-auto rounded-lg bg-gray-100 overflow-y-auto">
+      <div className="admin-page py-4 px-4 pt-10 pb-10 mx-auto rounded-lg bg-gray-100 overflow-y-auto">
         {/* 페이지 헤더 */}
         <div className="mb-6">
-          <div className="flex items-center mb-4">
+          <div className="relative mb-4 min-h-[40px] flex items-center justify-center">
             <button
               onClick={() => router.back()}
-              className="text-gray-600 hover:text-gray-800 mr-4"
-              aria-label="뒤로가기"
+              className="px-4 py-3 rounded-lg transition-colors bg-gray-200 text-gray-700 absolute left-0 top-1/2 -translate-y-1/2 px-3 py-1 text-sm"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-                />
-              </svg>
+              ← 뒤로
             </button>
-            <h1 className="text-2xl font-semibold text-gray-900 flex-1 text-center">
+            <h1 className="text-2xl font-semibold text-gray-900 text-center w-full">
               그룹 관리
             </h1>
-            <div className="w-6"></div> {/* 오른쪽 정렬을 위한 빈 공간 */}
           </div>
           <p className="text-gray-600 text-center">
             전체 그룹 및 멤버 정보를 관리할 수 있습니다.
