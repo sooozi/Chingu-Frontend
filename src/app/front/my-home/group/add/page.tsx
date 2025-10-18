@@ -22,6 +22,7 @@ export default function GroupAdd() {
   const [selectedFriendIds, setSelectedFriendIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -73,6 +74,11 @@ export default function GroupAdd() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 중복 제출 방지
+    if (isSubmitting) {
+      return;
+    }
+
     const token = getCookieValue('accessToken');
 
     if (!token) {
@@ -80,6 +86,8 @@ export default function GroupAdd() {
       router.push('/front/account/login');
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const res = await fetch('/api/groups/create', {
@@ -104,6 +112,7 @@ export default function GroupAdd() {
     } catch (err) {
       console.error('[그룹 생성 실패]', err);
       alert('그룹 생성 중 문제가 발생했습니다.');
+      setIsSubmitting(false);
     }
   };
 
@@ -111,6 +120,7 @@ export default function GroupAdd() {
     <div className="group-add-page py-24 px-4 mx-auto rounded-lg bg-gray-100 overflow-y-auto">
       <div className="flex items-center mb-6">
         <button
+          type="button"
           onClick={() => router.back()}
           className="text-gray-600 hover:text-gray-800"
           aria-label="뒤로가기"
@@ -122,6 +132,8 @@ export default function GroupAdd() {
             strokeWidth={2}
             stroke="currentColor"
             className="w-6 h-6"
+            aria-hidden="true"
+            focusable="false"
           >
             <path
               strokeLinecap="round"
@@ -202,8 +214,8 @@ export default function GroupAdd() {
         </div>
 
         {/* 그룹 추가 버튼 */}
-        <Button type="submit" className="w-full">
-          그룹 추가
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? '생성 중...' : '그룹 추가'}
         </Button>
       </form>
     </div>
