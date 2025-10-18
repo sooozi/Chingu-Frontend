@@ -29,7 +29,7 @@ export default function MemberDetail() {
   const [error, setError] = useState('');
   const [friends, setFriends] = useState<Friend[]>([]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isInviting, setIsInviting] = useState(false);
+  const [invitingFriendId, setInvitingFriendId] = useState<number | null>(null);
   const [invitedFriends, setInvitedFriends] = useState<Set<number>>(new Set());
   const [groupId, setGroupId] = useState<string | null>(null);
 
@@ -70,17 +70,18 @@ export default function MemberDetail() {
           throw new Error(errorData.message || '멤버 목록 조회 실패');
         }
         const data = await res.json();
-        console.log('[멤버 목록] API 응답:', data);
         setMembers(data);
       })
       .catch((err) => {
         console.error('[멤버 목록 조회 오류]', err);
-        setError(err.message || '멤버 목록을 불러오지 못했습니다.');
       })
       .finally(() => setIsLoading(false));
 
     // 친구 목록 조회
     fetchFriends(token);
+
+    // 그룹 초대 목록 복원 (sessionStorage)
+    loadInvitedFriendsFromSession(id);
   }, [router]);
 
   // 친구 목록 조회
@@ -96,21 +97,43 @@ export default function MemberDetail() {
       if (response.ok) {
         const data = await response.json();
         setFriends(data);
-        console.log('[친구 목록] API 응답:', data);
-
-        // 각 친구의 프로필 이미지 정보 확인
-        if (Array.isArray(data)) {
-          data.forEach((friend: Friend, index: number) => {
-            console.log(`[친구 ${index + 1}]`, {
-              nickname: friend.nickname,
-              profilePictureUrl: friend.profilePictureUrl,
-              hasProfileImage: !!friend.profilePictureUrl,
-            });
-          });
-        }
       }
     } catch (err) {
       console.error('[친구 목록 조회 오류]', err);
+    }
+  };
+
+  // 그룹별 초대 목록을 sessionStorage에서 불러오기
+  const loadInvitedFriendsFromSession = (currentGroupId: string) => {
+    try {
+      const storageKey = `groupInvites_${currentGroupId}`;
+      const stored = sessionStorage.getItem(storageKey);
+
+      if (stored) {
+        const invitedIds = JSON.parse(stored) as number[];
+        setInvitedFriends(new Set(invitedIds));
+      }
+    } catch (err) {
+      console.error('[초대 목록 불러오기 오류]', err);
+    }
+  };
+
+  // 그룹별 초대 목록을 sessionStorage에 저장
+  const saveInvitedFriendToSession = (
+    currentGroupId: string,
+    friendUserId: number
+  ) => {
+    try {
+      const storageKey = `groupInvites_${currentGroupId}`;
+      const stored = sessionStorage.getItem(storageKey);
+      const existing = stored ? JSON.parse(stored) : [];
+
+      if (!existing.includes(friendUserId)) {
+        const updated = [...existing, friendUserId];
+        sessionStorage.setItem(storageKey, JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error('[초대 목록 저장 오류]', err);
     }
   };
 
@@ -129,7 +152,7 @@ export default function MemberDetail() {
       return;
     }
 
-    setIsInviting(true);
+    setInvitingFriendId(friend.friendUserId);
 
     try {
       const response = await fetch('/api/groups/invites', {
@@ -155,6 +178,9 @@ export default function MemberDetail() {
 
       // 초대한 친구를 invitedFriends에 추가
       setInvitedFriends((prev) => new Set(prev).add(friend.friendUserId));
+
+      // sessionStorage에도 저장 (새로고침 시 복원용)
+      saveInvitedFriendToSession(groupId, friend.friendUserId);
     } catch (error) {
       console.error('[그룹 초대 오류]', error);
       alert(
@@ -163,7 +189,7 @@ export default function MemberDetail() {
           : '그룹 초대 중 오류가 발생했습니다.'
       );
     } finally {
-      setIsInviting(false);
+      setInvitingFriendId(null);
     }
   };
 
@@ -279,41 +305,48 @@ export default function MemberDetail() {
                 </p>
               </div>
             ) : (
-              friends.map((friend) => (
-                <div
-                  key={friend.friendUserId}
-                  className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="font-semibold text-gray-800">
-                      {friend.nickname}
-                    </div>
-                    <div className="text-sm text-gray-500">{friend.name}</div>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => handleInviteToGroup(friend)}
-                    disabled={
-                      isInviting || invitedFriends.has(friend.friendUserId)
-                    }
-                    className="!text-xs !px-2 !py-1 bg-point1-color disabled:opacity-50 disabled:cursor-not-allowed !rounded-full transition-colors duration-200"
+              friends.map((friend) => {
+                // 이미 그룹 멤버인지 확인
+                const isAlreadyMember = members.some(
+                  (member) => member.userId === friend.friendUserId
+                );
+                // 초대했거나 초대 중인지 확인
+                const isInvited = invitedFriends.has(friend.friendUserId);
+                const isInviting = invitingFriendId === friend.friendUserId;
+
+                return (
+                  <div
+                    key={friend.friendUserId}
+                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
-                    {invitedFriends.has(friend.friendUserId) ? (
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span className="!text-xs">초대 중...</span>
+                    <div className="flex items-center gap-3">
+                      <div className="font-semibold text-gray-800">
+                        {friend.nickname}
                       </div>
-                    ) : isInviting ? (
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>초대 중...</span>
-                      </div>
-                    ) : (
-                      '초대'
-                    )}
-                  </Button>
-                </div>
-              ))
+                      <div className="text-sm text-gray-500">{friend.name}</div>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => handleInviteToGroup(friend)}
+                      disabled={isInviting || isInvited || isAlreadyMember}
+                      className="!text-xs !px-2 !py-1 bg-point1-color disabled:opacity-50 disabled:cursor-not-allowed !rounded-full transition-colors duration-200"
+                    >
+                      {isInviting ? (
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span className="!text-xs">초대 중...</span>
+                        </div>
+                      ) : isAlreadyMember ? (
+                        '가입됨'
+                      ) : isInvited ? (
+                        '초대완료'
+                      ) : (
+                        '초대'
+                      )}
+                    </Button>
+                  </div>
+                );
+              })
             )}
           </div>
 
